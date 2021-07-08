@@ -79,9 +79,9 @@ $(document).ready(function () {
 
 <链接地址>
 ### 图片
-![alt 属性文本](图片地址)
+![alt 属性文本](https://avatars.githubusercontent.com/u/25358018?s=48&v=4)
 
-![alt 属性文本](图片地址 "可选标题")
+![alt 属性文本](https://avatars.githubusercontent.com/u/25358018?s=48&v=4 "可选标题")
 ### 表格
 |  表头   | 表头  |
 |  ----  | ----  |
