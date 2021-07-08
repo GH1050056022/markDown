@@ -91,8 +91,10 @@ $(document).ready(function () {
 使用 <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Del</kbd> 重启电脑
 ### 转义
 **文本加粗** 
+
 \*\* 正常显示星号 \*\*
 ### 公式
+
 $$
 \mathbf{V}_1 \times \mathbf{V}_2 =  \begin{vmatrix} 
 \mathbf{i} & \mathbf{j} & \mathbf{k} \\
