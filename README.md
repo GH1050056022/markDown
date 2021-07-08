@@ -93,6 +93,3 @@ $(document).ready(function () {
 **文本加粗** 
 
 \*\* 正常显示星号 \*\*
-### 公式
-
-$$\sum_{i=0}N\int_{a}{b}g(t,i)\text{d}t$$
