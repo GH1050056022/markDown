@@ -31,7 +31,9 @@ docker run image
 
 #测试
 docker run -it /bin/bash #启动并进入容器
-#退出
+```
+退出
+```shell
 exit
 docker ps        #列出运行中的容器
 docker ps -a	 #查看当前运行+曾经运行的容器
@@ -48,9 +50,13 @@ docker start ID
 docker restart ID
 docker stop ID
 docker kill ID
-# 查看日志
+```
+查看日志
+```shell
 docker logs -t -f --tail 10 镜像名称
-#查看容器中进程 
+```
+查看容器中进程
+```shell
 docker -top 容器ID
 #查看镜像的元数据
 docker inspect 容器ID
