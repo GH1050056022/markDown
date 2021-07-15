@@ -48,4 +48,11 @@ docker start ID
 docker restart ID
 docker stop ID
 docker kill ID
+# 查看日志
+docker logs -t -f --tail 10 镜像名称
+#查看容器中进程 
+docker -top 容器ID
+#查看镜像的元数据
+docker inspect 容器ID
+#进入当前正在运行的容器
 ```
