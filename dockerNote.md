@@ -113,7 +113,52 @@ exit
 docker ps 
 # 将操作过的容器提交为新的镜像
 docker commit -a="lucio" -m="add webapps info" 容器ID tomcat02:1.0
-
-
 	 
 ```
+## 容器数据卷
+容器可以删除，如果数据在容器中，那么镜像删除后，数据就丢失了，这是我们不希望看到的。
+==需求：数据可以持久化==
+Mysql 容器删除，数据没了，等同于删库跑路！！！
+引出，容器间需要一个数据共享技术！
+
+docker容器产生的数据，同步到本地--这就是卷技术！目录的挂载，将我们容器内的目录，挂载到Linux上面！
+> 总结一句话：为了容器的持久化和同步操作！
+
+方式1：直接用命令挂载 -v
+```shell
+docker run -it -v 主机目录地址:容器目录地址
+#测试
+docker run -it -v /home/test:home centos /bin/bash
+docker inspect 容器ID
+
+这样两个地址下的文件就会互相同步了，只要容器不删除，是否启用都会同步内容
+好处：我们只需要本地修改，容器内就会同步
+
+## 思考
+mysql 数据持久化
+docker pull mysql:5.7
+
+#具名挂载、匿名挂载
+#匿名挂载 -v 容器对应路径
+docker run -P --name nginx01 -v /ect/nginx nginx
+#查看所有卷的情况
+docker volume ls
+#这里发现我们，只写了容器内路径，没有指定路径，它会默认生成路径
+
+#具名挂载 
+docker run -P --name nginx02 -v juming-nginx:/ect/nginx nginx
+docker volume juming-naginx
+#没有指定路径的  都会生成到 /var/lib/docker/volumes/
+```
+
+
+
+## DockerFile
+
+## Docker 网络
+
+实战
+Docker Compse
+Docker Swarm
+
+CI/CD Jenkins流水线
