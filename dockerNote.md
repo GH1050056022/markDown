@@ -1,4 +1,5 @@
-概述图
+## Dokcer常用命令
+## 命令概述图
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/2021071616212269.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2NzZG4xMDUwMDU2MDIy,size_16,color_FFFFFF,t_70)
 
 ```shell
@@ -16,7 +17,7 @@ REPOSITORY                TAG                 IMAGE ID            CREATED       
 docker search mysql 	#搜索镜像
 --filter=STARS=3000
 
-docker pull	mysql:5.7 #下载镜像
+docker pull mysql:5.7 #下载镜像
 
 docker rmi -f [ID] ][ID2]	#删除镜像
 docker rmi -f ${docker images -aq} #删除全部镜像
@@ -153,12 +154,13 @@ docker volume juming-naginx
 
 
 
-## DockerFile
+DockerFile
 
-## Docker 网络
+Docker 网络
 
 实战
 Docker Compse
+
 Docker Swarm
 
 CI/CD Jenkins流水线
