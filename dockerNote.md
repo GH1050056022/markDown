@@ -219,6 +219,126 @@ ENV				#构建时候，设置环境变量
 **PS: DockerHub中99%镜像都是FROM scratch,然后编写需要的软件和配置来进行构建的**
 
 ## Docker 网络
+理解Docker0
+>测试，查看IP地址
+>ip addr
+>#问题 dokcer是如何处理网络访问的？
+
+```shell
+docker run -d -P --name tomcat01 tomcat
+#查看容器内部网络地址 ip addr,发现容器启动后会得到ech0@if262 ip地址
+docker exec -it tomcat01 ip addr
+
+```
+>原理
+>1.我们每启动一个docker容器，docker就会给容器分配一个ip，我们只要安装了docker，就会有一个docker0--桥接模式，使用的技术是veth-pair 技术！
+>2.再启动个容器 ，发现又多了一对网卡
+>evth-pair 就是一对虚拟设备接口，他们都是成对出现的，一端连接着协议，一段彼此相连
+>正因为又这个特性，veth-pair充当一个桥梁作用，连接各种虚拟网络设备
+>openStac、docker容器之间、ovs连接，都是使用veth-pair技术。
+>3.两个容器之间 可以直接ping通的。
+>docker  exec -it tomcat02 ping 172.18.0.2
+![在这里插入图片描述](https://img-blog.csdnimg.cn/86934eced9244a709edd990626987282.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2NzZG4xMDUwMDU2MDIy,size_16,color_FFFFFF,t_70)
+>结论：tomcat01、tomcat02公用路由器Dokcer0
+>所有的容器，在不指定网络的情况下，都是由Docker0分配默认IP
+
+>小结：docker使用的是linux的桥接
+>![在这里插入图片描述](https://img-blog.csdnimg.cn/b6556d3dce0c4723b3a01f98c0cbb916.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2NzZG4xMDUwMDU2MDIy,size_16,color_FFFFFF,t_70)
+>Docker中所有网络都是虚拟的，虚拟的转发效率高！
+## --link
+> 思考一个场景，我们编写一个微服务，database url:ip,项目不重启，数据库IP变了，我们希望处理这个问题，可以通过名字访问容器吗？
+>如何解决呢?通过【--link】
+>docker run -d -P --name tomcat03 --link tomcat02 tomcat
+> docker exec -it tomcat03 ping tomcat02
+> 反向可以ping通吗？【不能】 
+
+探究：inspect 
+本质探究： --link 就是在hosts中配置了 172.18.03 tomcat02
+>PS: 现在已经不建议使用--link
+>Docker0 问题不支持容器名访问
+
+### 自定义网络
+```shell
+docker network --help
+# 查看所有docker网络
+docker network ls
+```
+![在这里插入图片描述](https://img-blog.csdnimg.cn/40a2b7856906423bac85a0bfde57a49f.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2NzZG4xMDUwMDU2MDIy,size_16,color_FFFFFF,t_70)
+### 网络模式
+1.bridge:桥接
+2.none:不配置网络 
+3.host:和宿主机共享网络
+4.container:容器网络连接（用的少！局限很大）
+
+
+```shell
+#测试
+#docker0特点，是默认的，域名不可以访问！--link可以打破
+
+docker nerwork create --hellp
+#自定义网络,PS：这个就是家里路由器的配置
+docker network create --driver bridge --subnet 192.168.0.0/16 --getway 192.168.0.1 mynet
+#查看自定义网络配置
+docker inspect mynet
+#启动容器配置网络为mynet
+docker -run -d -P --name tomcat01 --net mynet tomcat
+docker -run -d -P --name tomcat02 --net mynet tomcat
+docker exec -it tomcat01 ping tomcat02
+#现在不使用--link 也通过容器名访问了
+```
+>我们自定义的网络docker已经帮我们维护好关系了，推荐我们使用这样的网络
+>好处
+>redis,不同集群使用不同网络，保证集群是健康安全的
+>mysql，不同集群使用不同网络，保证集群是健康安全的
+
+### 网络连通
+```shell
+#测试打通 tomcat01 与网络mynet
+#connect a container to a network 将一个容器连接到网络
+docker network connect mynet tomcat01
+#连通之后，将tomcat01 放到了mynet下
+```
+>结论：docker network connect 实现得是’容器‘跨网络操作‘容器’
+
+### 实战：部署Redis集群
+分片 + 高可用 + 负载均衡
+
+```shell
+ 	# 创建网卡
+    docker network create redis --subnet 172.38.0.0/16
+    
+    # 通过脚本创建六个redis配置
+    for port in $(seq 1 6);\
+    do \
+    mkdir -p /mydata/redis/node-${port}/conf
+    touch /mydata/redis/node-${port}/conf/redis.conf
+    cat << EOF >> /mydata/redis/node-${port}/conf/redis.conf
+    port 6379
+    bind 0.0.0.0
+    cluster-enabled yes
+    cluster-config-file nodes.conf
+    cluster-node-timeout 5000
+    cluster-announce-ip 172.38.0.1${port}
+    cluster-announce-port 6379
+    cluster-announce-bus-port 16379
+    appendonly yes
+    EOF
+    done
+    
+    # 通过脚本运行六个redis
+    for port in $(seq 1 6);\
+    docker run -p 637${port}:6379 -p 1667${port}:16379 --name redis-${port} \
+    -v /mydata/redis/node-${port}/data:/data \
+    -v /mydata/redis/node-${port}/conf/redis.conf:/etc/redis/redis.conf \
+    -d --net redis --ip 172.38.0.1${port} redis:5.0.9-alpine3.11 redis-server /etc/redis/redis.conf
+    
+    #redis默认没有bash
+    docker exec -it redis-1 /bin/sh 
+    redis-cli --cluster create 172.38.0.11:6379 172.38.0.12:6379 172.38.0.13:6379 172.38.0.14:6379 172.38.0.15:6379 172.38.0.16:6379  --cluster-replicas 1
+#docker 搭建redis集群完成！
+```
+### 
+
 
 实战
 Docker Compse
