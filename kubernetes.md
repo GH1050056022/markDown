@@ -37,6 +37,56 @@ kubectl apply -f /opt/kubernetes-dashboard.yaml
 kubectl get pods -n kubernetes-dashboard -w
 
 ```
+### step2 使用kubectl启动容器
+```shell
+#启动集群组件并下载 Kubectl CLI
+minikube start --wait=false
+
+#检查等待节点
+kubectl get nodes
+
+#启动一个名为http的部署，它将启动一个基于 Docker 镜像katacoda/docker-http-server:latest的容器
+kubectl run http --image=katacoda/docker-http-server:latest --replicas=1
+
+# 查看部署状态
+kubectl get deployments
+
+#查看描述
+kubectl describe deployment http
+
+#暴露主机8000上的容器端口80绑定到主机的external-ip
+kubectl expose deployment http --external-ip="172.17.0.63" --port=8000 --target-port=80
+
+#ping 主机并查看 HTTP 服务的结果
+curl http://172.17.0.63:8000
+
+#在端口8001上公开的第二个 http 服务
+kubectl run httpexposed --image=katacoda/docker-http-server:latest --replicas=1 --port=80 --hostport=8001
+
+#访问下
+curl http://172.17.0.63:8001
+
+kubectl get svc
+
+#查看详细信息
+docker ps | grep httpexposed
+
+```
+
+### step3 扩展容器
+```shell
+#kubectl scale命令允许我们调整为特定部署或复制控制器运行的Pod数量
+kubectl scale --replicas=3 deployment http
+
+#查看容器
+kubectl get pods
+
+#查看描述
+kubectl describe svc http
+
+#向服务发出请求将请求在不同的节点处理请求
+curl http://172.17.0.63:8000
 
 
+```
 
